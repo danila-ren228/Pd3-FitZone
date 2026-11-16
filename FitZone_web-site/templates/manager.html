@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>FITZONE — Панель менеджера</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header>
+    <div class="logo">FIT<span>ZONE</span></div>
+    <div class="header-actions">
+        <button class="btn-outline" onclick="toggleTheme()" style="padding: 8px 12px; font-size: 12px;">🌓 Тема</button>
+        <a href="/" class="btn-outline" style="padding: 8px 15px;">На сайт</a>
+    </div>
+</header>
+
+<div class="container" style="padding-top: 120px;">
+    <div class="panel-header">FITZONE / ПАНЕЛЬ УПРАВЛЕНИЯ МЕНЕДЖЕРА</div>
+
+    <!-- Переключатель дней недели -->
+    <div class="schedule-tabs" style="justify-content: flex-start; margin-bottom: 20px;">
+        <button class="tab-btn active" onclick="filterDay('Понедельник', this)">Понедельник</button>
+        <button class="tab-btn" onclick="filterDay('Вторник', this)">Вторник</button>
+        <button class="tab-btn" onclick="filterDay('Среда', this)">Среда</button>
+        <button class="tab-btn" onclick="filterDay('Четверг', this)">Четверг</button>
+        <button class="tab-btn" onclick="filterDay('Пятница', this)">Пятница</button>
+        <button class="tab-btn" onclick="filterDay('Суббота', this)">Суббота</button>
+        <button class="tab-btn" onclick="filterDay('Воскресенье', this)">Воскресенье</button>
+    </div>
+
+    <!-- Таблица расписания из базы данных -->
+    <div class="panel-box">
+        <h2 id="table-title">Список занятий (Понедельник)</h2>
+        <table class="schedule-table">
+            <thead>
+                <tr>
+                    <th>Время</th>
+                    <th>Тренировка</th>
+                    <th>Тренер</th>
+                    <th>Зал</th>
+                    <th>Места</th>
+                    <th>Действие</th>
+                </tr>
+            </thead>
+            <tbody id="managerTable"></tbody>
+        </table>
+    </div>
+
+    <!-- Форма добавления тренировки -->
+    <div class="panel-box">
+        <h2>+ Добавить тренировку</h2>
+        <form id="addForm">
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 15px;">
+                <div class="form-group">
+                    <label>День недели</label>
+                    <select id="day_of_week" style="width:100%; padding:10px; background:var(--bg-input); border:1px solid var(--border-color); color:var(--text-main); border-radius:6px;">
+                        <option value="Понедельник">Понедельник</option>
+                        <option value="Вторник">Вторник</option>
+                        <option value="Среда">Среда</option>
+                        <option value="Четверг">Четверг</option>
+                        <option value="Пятница">Пятница</option>
+                        <option value="Суббота">Суббота</option>
+                        <option value="Воскресенье">Воскресенье</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Тренировка</label><input type="text" id="title" placeholder="CrossFit" required></div>
+                <div class="form-group"><label>Тренер</label><input type="text" id="trainer" placeholder="Алексей Смирнов" required></div>
+                <div class="form-group"><label>Зал</label><input type="text" id="room" placeholder="Зал 1" required></div>
+                <div class="form-group"><label>Время</label><input type="text" id="event_time" placeholder="17:00" required></div>
+            </div>
+            <button type="submit" class="btn-main">ДОБАВИТЬ В РАСПИСАНИЕ</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleTheme() {
+        const current = document.documentElement.getAttribute('data-theme');
+        const next = current === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('fitzone_theme', next);
+    }
+    document.documentElement.setAttribute('data-theme', localStorage.getItem('fitzone_theme') || 'dark');
+
+    let allWorkouts = [];
+
+    function loadManagerSchedule(day = 'Понедельник') {
+        fetch('/api/schedule')
+            .then(res => res.json())
+            .then(data => {
+                allWorkouts = data;
+                renderWorkouts(day);
+            });
+    }
+
+    function renderWorkouts(day) {
+        const tbody = document.getElementById('managerTable');
+        document.getElementById('table-title').innerText = `Список занятий (${day})`;
+        tbody.innerHTML = '';
+        
+        const filtered = allWorkouts.filter(w => w.date === day || !w.date);
+        if(filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Нет тренировок в этот день</td></tr>';
+            return;
+        }
+        filtered.forEach(item => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${item.event_time}</td>
+                    <td><b>${item.title}</b></td>
+                    <td>${item.trainer}</td>
+                    <td>${item.room}</td>
+                    <td><span style="color:var(--accent); font-weight:bold;">${item.free_slots} чел.</span></td>
+                    <td><button class="btn-main" style="background:#ff4444; color:#fff; padding:6px 12px; font-size:12px;" onclick="deleteWorkout(${item.id})">Удалить</button></td>
+                </tr>
+            `;
+        });
+    }
+
+    function filterDay(day, btn) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderWorkouts(day);
+    }
+
+    loadManagerSchedule('Понедельник');
+
+    document.getElementById('addForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        fetch('/api/schedule', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                title: document.getElementById('title').value,
+                trainer: document.getElementById('trainer').value,
+                room: document.getElementById('room').value,
+                date: document.getElementById('day_of_week').value,
+                event_time: document.getElementById('event_time').value,
+                free_slots: 15
+            })
+        }).then(res => res.json()).then(data => {
+            if(data.status === 'success') {
+                alert('Тренировка успешно добавлена в расписание!');
+                loadManagerSchedule(document.getElementById('day_of_week').value);
+                document.getElementById('addForm').reset();
+            }
+        });
+    });
+
+    function deleteWorkout(id) {
+        fetch(`/api/schedule?id=${id}`, { method: 'DELETE' })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') { loadManagerSchedule(); }
+            });
+    }
+</script>
+
+</body>
+</html>

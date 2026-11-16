@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>FITZONE — Панель администратора</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header>
+    <div class="logo">FIT<span>ZONE</span></div>
+    <div class="header-actions">
+        <button class="btn-outline" onclick="toggleTheme()" style="padding: 8px 12px; font-size: 12px;">🌓 Тема</button>
+        <a href="/" class="btn-outline" style="padding: 8px 15px;">На сайт</a>
+    </div>
+</header>
+
+<div class="container" style="padding-top: 120px; max-width: 1200px; margin: 0 auto; padding-left: 20px; padding-right: 20px;">
+    <div class="panel-header" style="font-size: 20px; font-weight: bold; margin-bottom: 25px; color: var(--accent);">FITZONE / ПАНЕЛЬ АДМИНИСТРАТОРА</div>
+
+    <div class="panel-box" style="background: var(--bg-card); padding: 25px; border-radius: 12px; border: 1px solid var(--border-color);">
+        <h2 style="margin-bottom: 20px; font-size: 18px;">Список клиентов и записей</h2>
+        <table class="schedule-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: var(--bg-card-hover); color: var(--accent); text-align: left;">
+                    <th style="padding: 12px;">ID</th>
+                    <th style="padding: 12px;">ФИО Клиента</th>
+                    <th style="padding: 12px;">Телефон</th>
+                    <th style="padding: 12px;">Тариф</th>
+                    <th style="padding: 12px;">Заметка / Тренер</th>
+                    <th style="padding: 12px;">Тренировка</th>
+                    <th style="padding: 12px;">Статус</th>
+                </tr>
+            </thead>
+            <tbody id="adminBookingsTable"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function toggleTheme() {
+        const current = document.documentElement.getAttribute('data-theme');
+        const next = current === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('fitzone_theme', next);
+    }
+    document.documentElement.setAttribute('data-theme', localStorage.getItem('fitzone_theme') || 'dark');
+
+    fetch('/api/admin/bookings')
+        .then(res => res.json())
+        .then(data => {
+            const tbody = document.getElementById('adminBookingsTable');
+            tbody.innerHTML = '';
+            if(data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px;">Нет активных заявок</td></tr>';
+                return;
+            }
+            data.forEach(b => {
+                tbody.innerHTML += `
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 12px;">#${b.id}</td>
+                        <td style="padding: 12px;"><b>${b.client_name}</b></td>
+                        <td style="padding: 12px;">${b.phone}</td>
+                        <td style="padding: 12px;">${b.tariff}</td>
+                        <td style="padding: 12px;">${b.trainer_note || '-'}</td>
+                        <td style="padding: 12px;">${b.workout_title || '-'}</td>
+                        <td style="padding: 12px;"><b>${b.status}</b></td>
+                    </tr>
+                `;
+            });
+        });
+</script>
+
+</body>
+</html>

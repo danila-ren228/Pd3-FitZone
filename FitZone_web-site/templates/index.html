@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>FITZONE — Фитнес Клуб</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- Шапка -->
+    <header>
+        <div class="logo">FIT<span>ZONE</span></div>
+        <nav>
+            <ul>
+                <li><a href="#home">Главная</a></li>
+
+                <li><a href="#about">О нас</a></li>
+                <li><a href="#services">Услуги</a></li>
+                <li><a href="#trainers">Тренеры</a></li>
+                <li><a href="#schedule">Расписание</a></li>
+                <li><a href="#tariffs">Абонементы</a></li>
+            </ul>
+        </nav>
+        <div class="auth-buttons" style="display: flex; align-items: center; gap: 12px;">
+            <button class="btn-outline" onclick="toggleTheme()" style="padding: 8px 12px; font-size: 12px;">🌓  Тема</button>
+            
+            {% if session.get('user_id') %}
+                <div class="user-menu-container">
+                    <button class="btn-outline" onclick="toggleUserMenu()" style="border-color: var(--accent); color: var(--accent);">👤  {{ session.get('user_name', 'Профиль') }} ▾</button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="#schedule">📅  Мои тренировки</a>
+                        {% if session.get('role') == 'manager' %}
+                            <a href="/manager">🛠 Панель менеджера</a>
+                        {% elif session.get('role') == 'admin' %}
+                            <a href="/admin">🛡 Панель администратора</a>
+                        {% endif %}
+                        <a href="/logout" class="logout">🚪  Выйти</a>
+                    </div>
+                </div>
+            {% else %}
+                <button id="open-login-btn" class="btn-outline" style="padding: 8px 15px;">Войти</button>
+            {% endif %}
+            
+            <button class="btn-main open-modal-btn">Записаться</button>
+        </div>
+    </header>
+
+    <!-- Главная -->
+    <section class="hero" id="home">
+        <div class="hero-tag">СИЛА. ДВИЖЕНИЕ. РЕЗУЛЬТАТ.</div>
+        <h1>СТАНЬ ЛУЧШЕЙ <span>ВЕРСИЕЙ СЕБЯ</span></h1>
+        <p>Современный фитнес-клуб с тренажёрным залом, групповыми тренировками и опытной командой тренеров</p>
+        <div class="hero-btns">
+            <button class="btn-main open-modal-btn">Попробовать бесплатно</button>
+            <a href="#about" class="btn-outline">Узнать больше</a>
+        </div>
+    </section>
+
+    <!-- О нас -->
+    <section id="about">
+        <div class="about-block">
+            <div class="hero-tag">О НАС</div>
+            <h2 style="margin-bottom: 15px;">ПРОСТРАНСТВО ДЛЯ ВАШИХ ДОСТИЖЕНИЙ</h2>
+            <p style="color: var(--text-muted);">Мы предлагаем современные условия для тренировок, команду из профессиональных тренеров и удобную систему онлайн-записи.</p>
+        </div>
+    </section>
+    
+    <!-- Услуги -->
+    <section id="services">
+        <h2 class="section-title">Наши направления</h2>
+        <div class="services-grid">
+            <div class="service-card">
+                <h3>Тренажёрный зал</h3>
+                <p>Современные тренажёры и свободные веса для всех групп мышц.</p>
+            </div>
+            <div class="service-card">
+                <h3>Групповые тренировки</h3>
+                <p>Энергичные программы для любого уровня подготовки.</p>
+            </div>
+            <div class="service-card">
+                <h3>Персональный тренинг</h3>
+                <p>Индивидуальная программа с личным наставником.</p>
+            </div>
+            <div class="service-card">
+                <h3>Йога и растяжка</h3>
+                <p>Развитие гибкости, гармония и здоровье вашей спины.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Тренеры (как в твоем оригинальном файле) -->
+    <section id="trainers">
+        <h2 class="section-title">Наши тренеры</h2>
+        <div class="trainers-grid">
+            <div class="trainer-card">
+                <div>
+                    <div class="trainer-avatar">👩 </div>
+                    <h3>Анна Кузнецова</h3>
+                    <div class="spec">Фитнес, силовые тренировки</div>
+                    <div class="exp">⭐  Опыт: 6 лет</div>
+                </div>
+                <button class="btn-outline book-trainer-btn" data-trainer="Анна Кузнецова">Записаться</button>
+            </div>
+            <div class="trainer-card">
+                <div>
+                    <div class="trainer-avatar">👩 </div>
+                    <h3>Екатерина Морозова</h3>
+                    <div class="spec">Йога, растяжка</div>
+                    <div class="exp">⭐  Опыт: 5 лет</div>
+                </div>
+
+<button class="btn-outline book-trainer-btn" data-trainer="Екатерина Морозова">Записаться</button>
+            </div>
+            <div class="trainer-card">
+                <div>
+                    <div class="trainer-avatar">👩 </div>
+                    <h3>Мария Соколова</h3>
+                    <div class="spec">Функциональный тренинг</div>
+                    <div class="exp">⭐  Опыт: 7 лет</div>
+                </div>
+                <button class="btn-outline book-trainer-btn" data-trainer="Мария Соколова">Записаться</button>
+            </div>
+            <div class="trainer-card">
+                <div>
+                    <div class="trainer-avatar">👨 </div>
+                    <h3>Александр Петров</h3>
+                    <div class="spec">Силовые тренировки, бодибилдинг</div>
+                    <div class="exp">⭐  Опыт: 10 лет</div>
+                </div>
+                <button class="btn-outline book-trainer-btn" data-trainer="Александр Петров">Записаться</button>
+            </div>
+            <div class="trainer-card">
+                <div>
+                    <div class="trainer-avatar">👨 </div>
+                    <h3>Максим Иванов</h3>
+                    <div class="spec">Функциональный тренинг</div>
+                    <div class="exp">⭐  Опыт: 7 лет</div>
+                </div>
+                <button class="btn-outline book-trainer-btn" data-trainer="Максим Иванов">Записаться</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Расписание -->
+    <section id="schedule">
+        <h2 class="section-title">Расписание занятий</h2>
+        <div class="schedule-tabs">
+            <button class="tab-btn active" onclick="switchDay('Пн')">Понедельник</button>
+            <button class="tab-btn" onclick="switchDay('Вт')">Вторник</button>
+            <button class="tab-btn" onclick="switchDay('Ср')">Среда</button>
+            <button class="tab-btn" onclick="switchDay('Чт')">Четверг</button>
+            <button class="tab-btn" onclick="switchDay('Пт')">Пятница</button>
+        </div>
+        <table class="schedule-table">
+            <thead>
+                <tr>
+                    <th>Время</th>
+                    <th>Направление</th>
+                    <th>Тренер</th>
+                    <th>Зал</th>
+                    <th>Свободные места</th>
+                    <th>Запись</th>
+                </tr>
+            </thead>
+            <tbody id="schedule-body">
+                <!-- Динамически заполняется из базы данных через API -->
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Абонементы (без кнопок выбора, просто информационные карточки) -->
+    <section id="tariffs">
+        <h2 class="section-title">Абонементы</h2>
+        <div class="tariffs-grid">
+            <div class="tariff-card">
+                <h3>СТАРТ</h3>
+                <div class="price">1 990 ₽ <span>/ мес.</span></div>
+                <ul class="features">
+                    <li>Тренажёрный зал (с 07:00 до 16:00)</li>
+                    <li>Вводный инструктаж</li>
+                    <li>Раздевалки и душевые</li>
+                </ul>
+            </div>
+            <div class="tariff-card popular">
+                <div class="badge">ПОПУЛЯРНЫЙ</div>
+                <h3>ОПТИМАЛЬНЫЙ</h3>
+                <div class="price">2 990 ₽ <span>/ мес.</span></div>
+                <ul class="features">
+                    <li>Безлимитный тренажёрный зал</li>
+                    <li>Групповые тренировки</li>
+                    <li>2 групповых занятия в подарок</li>
+                    <li>Раздевалки и душевые</li>
+                </ul>
+            </div>
+            <div class="tariff-card">
+                <h3>ПРЕМИУМ</h3>
+                <div class="price">4 990 ₽ <span>/ мес.</span></div>
+                <ul class="features">
+                    <li>Полный безлимит клуба</li>
+                    <li>Персональный тренер на месяц</li>
+                    <li>Сауна и фито-бар</li>
+<li>Индивидуальная программа</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Футер (с рабочими кнопками соцсетей и QR-кодами) -->
+    <footer>
+        <div class="logo">FIT<span>ZONE</span></div>
+        <div>📍  ул. Спортивная, 15, Москва &nbsp;|&nbsp; 📞  +7 (999) 123-45-67</div>
+        <div class="footer-socials">
+            <button class="btn-outline" style="padding: 6px 12px; font-size: 12px;" onclick="openQr('telegram')">TELEGRAM (QR)</button>
+            <button class="btn-outline" style="padding: 6px 12px; font-size: 12px;" onclick="openQr('max')">MAX (QR)</button>
+        </div>
+    </footer>
+
+    <!-- Модальное окно Записи -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="close-modal">&times;</span>
+            <h3 style="margin-bottom: 20px; text-align: center; color: var(--accent);">Запись на тренировку</h3>
+            <form id="booking-form">
+                <div class="form-group">
+                    <label>Ваше ФИО:</label>
+                    <input type="text" id="fullname" placeholder="Иван Иванов" required>
+                </div>
+                <div class="form-group">
+                    <label>Телефон:</label>
+                    <input type="tel" id="phone" placeholder="+7 (999) 000-00-00" required>
+                </div>
+                <div class="form-group">
+                    <label>Пароль для входа:</label>
+                    <input type="password" id="reg-password" placeholder="Пароль" required>
+                </div>
+                <div class="form-group">
+                    <label>Тариф:</label>
+                    <select id="tariff">
+                        <option value="Старт">Старт (1 990 ₽)</option>
+                        <option value="Оптимальный">Оптимальный (2 990 ₽)</option>
+                        <option value="Премиум">Премиум (4 990 ₽)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Тренер / Пожелания:</label>
+                    <input type="text" id="trainer_note" placeholder="Имя тренера или направление">
+                </div>
+                <button type="submit" class="btn-main" style="width: 100%; margin-top: 10px;">Зарегистрироваться</button>
+            </form>
+            <div id="status-msg"></div>
+        </div>
+    </div>
+
+    <!-- Модальное окно Входа -->
+    <div id="login-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span id="close-login-modal" class="close-btn">&times;</span>
+            <h3 style="margin-bottom: 20px; text-align: center; color: var(--accent);">Вход в систему</h3>
+            <form id="login-form">
+                <div class="form-group">
+                    <label>Телефон (логин):</label>
+                    <input type="text" id="login-input" placeholder="+7 (999) 000-00-00" required>
+                </div>
+                <div class="form-group">
+                    <label>Пароль:</label>
+                    <input type="password" id="password-input" placeholder="Пароль" required>
+                </div>
+                <button type="submit" class="btn-main" style="margin-top: 10px; width: 100%;">Войти</button>
+            </form>
+            <p id="login-status-msg"></p>
+        </div>
+    </div>
+
+    <!-- Модальное окно для QR-кодов соцсетей -->
+    <div class="modal-overlay" id="qrModal">
+        <div class="modal-content" style="text-align: center; max-width: 320px;">
+<span class="close-btn" onclick="closeQr()">&times;</span>
+            <h3 id="qrTitle" style="color: var(--accent); margin-bottom: 15px;">QR-код</h3>
+            <img id="qrImage" src="" alt="QR Code" style="width: 180px; height: 180px; border-radius: 8px; background: #fff; padding: 10px; margin: 0 auto;">
+        </div>
+    </div>
+
+    <!-- JavaScript логика -->
+    <script>
+        // Переключение тем
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('fitzone_theme', next);
+        }
+        document.documentElement.setAttribute('data-theme', localStorage.getItem('fitzone_theme') || 'dark');
+
+        // Выпадающее меню профиля
+        function toggleUserMenu() {
+            document.getElementById('userDropdown').classList.toggle('active');
+        }
+        window.addEventListener('click', (e) => {
+            if (!e.target.closest('.user-menu-container')) {
+                const dropdown = document.getElementById('userDropdown');
+                if (dropdown) dropdown.classList.remove('active');
+            }
+        });
+
+        // QR модалка
+        function openQr(type) {
+            const modal = document.getElementById('qrModal');
+            const title = document.getElementById('qrTitle');
+            const img = document.getElementById('qrImage');
+            if(type === 'telegram') {
+                title.innerText = 'Telegram FITZONE';
+                img.src = "{{ url_for('static', filename='img/qr_tg.jpg') }}";
+            } else {
+                title.innerText = 'Max FITZONE';
+                img.src = "{{ url_for('static', filename='img/qr_max.jpg') }}";
+            }
+            modal.style.display = 'flex';
+        }
+        function closeQr() { document.getElementById('qrModal').style.display = 'none'; }
+
+        // Модальные окна записи и входа
+        const modal = document.getElementById('modal');
+        const closeModalBtn = document.getElementById('close-modal');
+        const openModalBtns = document.querySelectorAll('.open-modal-btn');
+        const bookTrainerBtns = document.querySelectorAll('.book-trainer-btn');
+        const trainerNote = document.getElementById('trainer_note');
+        const form = document.getElementById('booking-form');
+        const statusMsg = document.getElementById('status-msg');
+
+        function closeModal() {
+            modal.style.display = 'none';
+            if (statusMsg) statusMsg.textContent = '';
+        }
+
+        openModalBtns.forEach(btn => btn.addEventListener('click', () => { modal.style.display = 'flex'; }));
+        
+        bookTrainerBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                trainerNote.value = `Тренер: ${btn.getAttribute('data-trainer')}`;
+                modal.style.display = 'flex';
+            });
+        });
+
+        closeModalBtn.addEventListener('click', closeModal);
+        window.addEventListener('click', (e) => { 
+            if (e.target === modal) closeModal();
+            if (e.target.id === 'login-modal') document.getElementById('login-modal').style.display = 'none';
+            if (e.target.id === 'qrModal') closeQr();
+        });
+
+        // Загрузка расписания из БД и бронирование
+        async function loadSchedule() {
+            try {
+                const res = await fetch('/api/schedule');
+                const data = await res.json();
+                const tbody = document.getElementById('schedule-body');
+                tbody.innerHTML = '';
+                if(data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Нет активных занятий в расписании</td></tr>';
+                    return;
+                }
+                data.forEach(item => {
+                    tbody.innerHTML += `<tr>
+                            <td>${item.date} ${item.event_time}</td>
+                            <td><b>${item.title}</b></td>
+                            <td>${item.trainer}</td>
+                            <td>${item.room}</td>
+                            <td><span style="color: var(--accent); font-weight: bold;">${item.free_slots} чел.</span></td>
+                            <td>
+                                ${item.free_slots > 0 ? `<button class="btn-main" style="padding: 6px 12px; font-size: 12px;" onclick="bookWorkout(${item.id})">Записаться</button>` : '<span style="color:#ff4444">Мест нет</span>'}
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch(e) { console.error(e); }
+        }
+        loadSchedule();
+
+        async function bookWorkout(workoutId) {
+            const res = await fetch('/api/book', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({workout_id: workoutId})
+            });
+            const result = await res.json();
+            if(res.ok) {
+                alert('Заявка успешно отправлена! Ожидайте подтверждения.');
+                loadSchedule();
+            } else {
+                alert(result.message || 'Сначала войдите в систему под своей учетной записью!');
+            }
+        }
+
+        // Регистрация клиента
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            statusMsg.style.color = 'var(--accent)';
+            statusMsg.textContent = 'Регистрация...';
+            const payload = {
+                fullname: document.getElementById('fullname').value,
+                phone: document.getElementById('phone').value,
+                password: document.getElementById('reg-password').value,
+                tariff: document.getElementById('tariff').value,
+                trainer_note: document.getElementById('trainer_note').value
+            };
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    statusMsg.textContent = 'Успешно! Теперь войдите в систему.';
+                    form.reset();
+                    setTimeout(() => { 
+                        closeModal(); 
+                        document.getElementById('login-modal').style.display = 'flex';
+                    }, 1200);
+                } else {
+                    statusMsg.style.color = '#ff4444';
+                    statusMsg.textContent = 'Ошибка регистрации (возможно, телефон уже занят)';
+                }
+            } catch (err) {
+                statusMsg.style.color = '#ff4444';
+                statusMsg.textContent = 'Ошибка сети';
+            }
+        });
+
+        // Авторизация
+        const loginModal = document.getElementById('login-modal');
+        const openLoginBtn = document.getElementById('open-login-btn');
+        const closeLoginBtn = document.getElementById('close-login-modal');
+        const loginForm = document.getElementById('login-form');
+        const loginStatusMsg = document.getElementById('login-status-msg');
+
+        if (openLoginBtn) openLoginBtn.addEventListener('click', () => loginModal.style.display = 'flex');
+        if (closeLoginBtn) closeLoginBtn.addEventListener('click', () => loginModal.style.display = 'none');
+
+        if (loginForm) {
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const payload = {
+                    login: document.getElementById('login-input').value,
+                    password: document.getElementById('password-input').value
+                };
+                const res = await fetch('/api/login', {
+
+    method: 'POST',headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                if (res.ok) {
+                    loginStatusMsg.style.color = 'var(--accent)';
+                    loginStatusMsg.textContent = 'Вход выполнен успешно!';
+                    setTimeout(() => {
+                        if (result.role === 'admin') {
+                            window.location.href = '/admin';
+                        } else if (result.role === 'manager') {
+                            window.location.href = '/manager';
+                        } else {
+                            window.location.reload();
+                        }
+                    }, 800);
+                } else {
+                    loginStatusMsg.style.color = '#ff4444';
+                    loginStatusMsg.textContent = result.message || 'Ошибка входа';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
