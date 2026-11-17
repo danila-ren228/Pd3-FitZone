@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from datetime import datetime
 import psycopg2
 
 DB_CONFIG = {
@@ -83,32 +84,38 @@ def register():
 def api_schedule():
     conn = get_db()
     cursor = conn.cursor()
-    
+
     if request.method == 'GET':
         cursor.execute("SELECT id, title, trainer, room, event_time, free_seats FROM schedule ORDER BY event_time ASC")
         rows = cursor.fetchall()
         schedule_list = []
         for r in rows:
+            formatted_time = r[4].strftime("%d.%m.%Y %H:%M") if r[4] else ""
             schedule_list.append({
                 'id': r[0],
                 'title': r[1],
                 'trainer': r[2],
                 'room': r[3],
-                'event_time': str(r[4]),
+                'event_time': formatted_time,
                 'free_seats': r[5]
             })
         cursor.close()
         conn.close()
         return jsonify(schedule_list)
-        
+
     elif request.method == 'POST':
         data = request.json
         title = data.get('title')
         trainer = data.get('trainer')
         room = data.get('room')
-        event_time = data.get('event_time') # Получаем дату и время из datetime-local
+        event_time = data.get('event_time')
         free_seats = data.get('free_seats', 15)
-        
+
+        try:
+            event_time = datetime.strptime(event_time, "%d.%m.%Y %H:%M")
+        except ValueError:
+            pass
+
         cursor.execute(
             "INSERT INTO schedule (title, trainer, room, event_time, free_seats) VALUES (%s, %s, %s, %s, %s)",
             (title, trainer, room, event_time, free_seats)
@@ -117,7 +124,7 @@ def api_schedule():
         cursor.close()
         conn.close()
         return jsonify({'status': 'success'})
-        
+
     elif request.method == 'DELETE':
         workout_id = request.args.get('id')
         cursor.execute("DELETE FROM schedule WHERE id = %s", (workout_id,))
@@ -141,7 +148,8 @@ def book_workout():
         conn = get_db()
         cursor = conn.cursor()
         
-        cursor.execute("SELECT free_slots FROM schedule WHERE id = %s", (workout_id,))
+        # Исправлено на free_seats
+        cursor.execute("SELECT free_seats FROM schedule WHERE id = %s", (workout_id,))
         workout = cursor.fetchone()
         
         if not workout or workout[0] <= 0:
@@ -149,11 +157,13 @@ def book_workout():
             conn.close()
             return jsonify({'status': 'error', 'message': 'Нет свободных мест'}), 400
             
-        cursor.execute("UPDATE schedule SET free_slots = free_slots - 1 WHERE id = %s", (workout_id,))
+        # В функции book_workout:
+        cursor.execute("UPDATE schedule SET free_seats = free_seats - 1 WHERE id = %s", (workout_id,))
         cursor.execute(
-            "INSERT INTO bookings (user_id, workout_id, status) VALUES (%s, %s, 'Ожидает')",
+            "INSERT INTO bookings (client_id, workout_id, status) VALUES (%s, %s, 'Ожидает')",
             (user_id, workout_id)
         )
+
         conn.commit()
         cursor.close()
         conn.close()
@@ -168,16 +178,15 @@ def api_admin_bookings():
     conn = get_db()
     cursor = conn.cursor()
     try:
-        # Проверяем структуру: если в bookings используется client_id или имя
         cursor.execute("""
             SELECT b.id, c.fullname, c.phone, c.tariff, c.trainer_note, s.title, b.status 
             FROM bookings b 
             JOIN clients c ON b.client_id = c.id 
             LEFT JOIN schedule s ON b.workout_id = s.id
         """)
+
     except Exception:
         conn.rollback()
-        # Запасной вариант, если таблица bookings устроена иначе
         cursor.execute("""
             SELECT id, 'Клиент', '-', '-', '-', '-', 'Ожидает' FROM bookings
         """)
@@ -214,7 +223,8 @@ def update_booking_status(booking_id):
         cursor.execute("SELECT workout_id FROM bookings WHERE id = %s", (booking_id,))
         b = cursor.fetchone()
         if b:
-            cursor.execute("UPDATE schedule SET free_slots = free_slots + 1 WHERE id = %s", (b[0],))
+            # Исправлено на free_seats
+            cursor.execute("UPDATE schedule SET free_seats = free_seats + 1 WHERE id = %s", (b[0],))
         cursor.execute("UPDATE bookings SET status = 'Отклонено' WHERE id = %s", (booking_id,))
         
     conn.commit()

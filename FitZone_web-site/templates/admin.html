@@ -10,7 +10,7 @@
 <header>
     <div class="logo">FIT<span>ZONE</span></div>
     <div class="header-actions">
-        <button class="btn-outline" onclick="toggleTheme()" style="padding: 8px 12px; font-size: 12px;">🌓 Тема</button>
+        <button class="btn-outline" onclick="toggleTheme()" style="padding: 8px 12px; font-size: 12px;">🌓</button>
         <a href="/" class="btn-outline" style="padding: 8px 15px;">На сайт</a>
     </div>
 </header>
@@ -30,6 +30,7 @@
                     <th style="padding: 12px;">Заметка / Тренер</th>
                     <th style="padding: 12px;">Тренировка</th>
                     <th style="padding: 12px;">Статус</th>
+                    <th style="padding: 12px;">Действие</th>
                 </tr>
             </thead>
             <tbody id="adminBookingsTable"></tbody>
@@ -46,29 +47,67 @@
     }
     document.documentElement.setAttribute('data-theme', localStorage.getItem('fitzone_theme') || 'dark');
 
-    fetch('/api/admin/bookings')
+    function loadAdminBookings() {
+        fetch('/api/admin/bookings')
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('adminBookingsTable');
+                tbody.innerHTML = '';
+                
+                if(data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 20px;">Нет активных заявок</td></tr>';
+                    return;
+                }
+                
+                data.forEach(b => {
+                    // Выбираем цвет текста для статуса
+                    let statusColor = '#ffcc00'; // Ожидает
+                    if (b.status === 'Подтверждено') statusColor = 'var(--accent)';
+                    if (b.status === 'Отклонено') statusColor = '#ff4444';
+
+                    // Кнопки отображаются, только если заявка еще в ожидании
+                    const actionButtons = b.status === 'Ожидает'
+                        ? `<div style="display: flex; gap: 8px;">
+                               <button class="btn-main" style="padding: 6px 12px; font-size: 12px;" onclick="updateStatus(${b.id}, 'confirm')">Подтвердить</button>
+                               <button class="btn-main" style="background: #ff4444; color: #fff; padding: 6px 12px; font-size: 12px;" onclick="updateStatus(${b.id}, 'reject')">Отклонить</button>
+                           </div>`
+                        : `<span style="color: var(--text-muted); font-size: 12px;">Обработано</span>`;
+
+                    tbody.innerHTML += `
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 12px;">#${b.id}</td>
+                            <td style="padding: 12px;"><b>${b.client_name}</b></td>
+                            <td style="padding: 12px;">${b.phone}</td>
+                            <td style="padding: 12px;">${b.tariff}</td>
+                            <td style="padding: 12px;">${b.trainer_note || '-'}</td>
+                            <td style="padding: 12px;">${b.workout_title || '-'}</td>
+                            <td style="padding: 12px;"><span style="color: ${statusColor}; font-weight: bold;">${b.status}</span></td>
+                            <td style="padding: 12px;">${actionButtons}</td>
+                        </tr>
+                    `;
+                });
+            });
+    }
+
+    // Функция отправки нажатия на кнопку в Flask
+    function updateStatus(bookingId, action) {
+        fetch(`/api/admin/booking/${bookingId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: action })
+        })
         .then(res => res.json())
         .then(data => {
-            const tbody = document.getElementById('adminBookingsTable');
-            tbody.innerHTML = '';
-            if(data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px;">Нет активных заявок</td></tr>';
-                return;
+            if (data.status === 'success') {
+                loadAdminBookings(); // Сразу обновляем список заявок без перезагрузки страницы
+            } else {
+                alert(data.message || 'Ошибка при обновлении статуса');
             }
-            data.forEach(b => {
-                tbody.innerHTML += `
-                    <tr style="border-bottom: 1px solid var(--border-color);">
-                        <td style="padding: 12px;">#${b.id}</td>
-                        <td style="padding: 12px;"><b>${b.client_name}</b></td>
-                        <td style="padding: 12px;">${b.phone}</td>
-                        <td style="padding: 12px;">${b.tariff}</td>
-                        <td style="padding: 12px;">${b.trainer_note || '-'}</td>
-                        <td style="padding: 12px;">${b.workout_title || '-'}</td>
-                        <td style="padding: 12px;"><b>${b.status}</b></td>
-                    </tr>
-                `;
-            });
         });
+    }
+
+    // Загружаем заявки при открытии страницы
+    loadAdminBookings();
 </script>
 
 </body>

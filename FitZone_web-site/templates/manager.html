@@ -10,7 +10,7 @@
 <header>
     <div class="logo">FIT<span>ZONE</span></div>
     <div class="header-actions">
-        <button class="btn-outline" onclick="toggleTheme()" style="padding: 8px 12px; font-size: 12px;">🌓 Тема</button>
+        <button class="btn-outline" onclick="toggleTheme()" style="padding: 8px 12px; font-size: 12px;">🌓</button>
         <a href="/" class="btn-outline" style="padding: 8px 15px;">На сайт</a>
     </div>
 </header>
@@ -35,7 +35,7 @@
         <table class="schedule-table">
             <thead>
                 <tr>
-                    <th>Время</th>
+                    <th>Дата и время</th>
                     <th>Тренировка</th>
                     <th>Тренер</th>
                     <th>Зал</th>
@@ -51,23 +51,28 @@
     <div class="panel-box">
         <h2>+ Добавить тренировку</h2>
         <form id="addForm">
+            <!--  5 колонок: Тренировка, Тренер, Зал, Дата/Время, Места -->
             <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 15px;">
                 <div class="form-group">
-                    <label>День недели</label>
-                    <select id="day_of_week" style="width:100%; padding:10px; background:var(--bg-input); border:1px solid var(--border-color); color:var(--text-main); border-radius:6px;">
-                        <option value="Понедельник">Понедельник</option>
-                        <option value="Вторник">Вторник</option>
-                        <option value="Среда">Среда</option>
-                        <option value="Четверг">Четверг</option>
-                        <option value="Пятница">Пятница</option>
-                        <option value="Суббота">Суббота</option>
-                        <option value="Воскресенье">Воскресенье</option>
-                    </select>
+                    <label>Тренировка</label>
+                    <input type="text" id="title" placeholder="CrossFit" required>
                 </div>
-                <div class="form-group"><label>Тренировка</label><input type="text" id="title" placeholder="CrossFit" required></div>
-                <div class="form-group"><label>Тренер</label><input type="text" id="trainer" placeholder="Алексей Смирнов" required></div>
-                <div class="form-group"><label>Зал</label><input type="text" id="room" placeholder="Зал 1" required></div>
-                <div class="form-group"><label>Время</label><input type="text" id="event_time" placeholder="17:00" required></div>
+                <div class="form-group">
+                    <label>Тренер</label>
+                    <input type="text" id="trainer" placeholder="Алексей Смирнов" required>
+                </div>
+                <div class="form-group">
+                    <label>Зал</label>
+                    <input type="text" id="room" placeholder="Зал 1" required>
+                </div>
+                <div class="form-group">
+                    <label>Дата и время</label>
+                    <input type="text" id="event_time" placeholder="17.11.2026 15:00" required>
+                </div>
+                <div class="form-group">
+                    <label>Количество мест</label>
+                    <input type="number" id="free_seats" placeholder="15" min="1" value="15" required>
+                </div>
             </div>
             <button type="submit" class="btn-main">ДОБАВИТЬ В РАСПИСАНИЕ</button>
         </form>
@@ -84,8 +89,20 @@
     document.documentElement.setAttribute('data-theme', localStorage.getItem('fitzone_theme') || 'dark');
 
     let allWorkouts = [];
+    let currentDay = 'Понедельник';
 
-    function loadManagerSchedule(day = 'Понедельник') {
+    // Функция определяет день недели по дате формата "17.11.2026 15:00"
+    function getDayNameFromDate(dateStr) {
+        if (!dateStr) return '';
+        const parts = dateStr.split(' ')[0].split('.');
+        if (parts.length !== 3) return '';
+        const dateObj = new Date(parts[2], parts[1] - 1, parts[0]);
+        const days = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+        return days[dateObj.getDay()];
+    }
+
+    function loadManagerSchedule(day = currentDay) {
+        currentDay = day;
         fetch('/api/schedule')
             .then(res => res.json())
             .then(data => {
@@ -99,7 +116,9 @@
         document.getElementById('table-title').innerText = `Список занятий (${day})`;
         tbody.innerHTML = '';
         
-        const filtered = allWorkouts.filter(w => w.date === day || !w.date);
+        // Фильтруем тренировки по реальному дню недели из даты
+        const filtered = allWorkouts.filter(w => getDayNameFromDate(w.event_time) === day);
+        
         if(filtered.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Нет тренировок в этот день</td></tr>';
             return;
@@ -111,7 +130,7 @@
                     <td><b>${item.title}</b></td>
                     <td>${item.trainer}</td>
                     <td>${item.room}</td>
-                    <td><span style="color:var(--accent); font-weight:bold;">${item.free_slots} чел.</span></td>
+                    <td><span style="color:var(--accent); font-weight:bold;">${item.free_seats} чел.</span></td>
                     <td><button class="btn-main" style="background:#ff4444; color:#fff; padding:6px 12px; font-size:12px;" onclick="deleteWorkout(${item.id})">Удалить</button></td>
                 </tr>
             `;
@@ -128,6 +147,8 @@
 
     document.getElementById('addForm').addEventListener('submit', (e) => {
         e.preventDefault();
+        const eventTimeVal = document.getElementById('event_time').value;
+        
         fetch('/api/schedule', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -135,14 +156,20 @@
                 title: document.getElementById('title').value,
                 trainer: document.getElementById('trainer').value,
                 room: document.getElementById('room').value,
-                date: document.getElementById('day_of_week').value,
-                event_time: document.getElementById('event_time').value,
-                free_slots: 15
+                event_time: eventTimeVal,
+                free_seats: parseInt(document.getElementById('free_seats').value)
             })
         }).then(res => res.json()).then(data => {
             if(data.status === 'success') {
                 alert('Тренировка успешно добавлена в расписание!');
-                loadManagerSchedule(document.getElementById('day_of_week').value);
+                const addedDay = getDayNameFromDate(eventTimeVal) || currentDay;
+                
+                // Переключаем активную вкладку на тот день недели, куда добавили тренировку
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.innerText === addedDay);
+                });
+                
+                loadManagerSchedule(addedDay);
                 document.getElementById('addForm').reset();
             }
         });
@@ -152,7 +179,7 @@
         fetch(`/api/schedule?id=${id}`, { method: 'DELETE' })
             .then(res => res.json())
             .then(data => {
-                if(data.status === 'success') { loadManagerSchedule(); }
+                if(data.status === 'success') { loadManagerSchedule(currentDay); }
             });
     }
 </script>

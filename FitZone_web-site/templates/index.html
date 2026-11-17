@@ -21,27 +21,32 @@
                 <li><a href="#tariffs">Абонементы</a></li>
             </ul>
         </nav>
-        <div class="auth-buttons" style="display: flex; align-items: center; gap: 12px;">
-            <button class="btn-outline" onclick="toggleTheme()" style="padding: 8px 12px; font-size: 12px;">🌓  Тема</button>
+                <div class="auth-buttons" style="display: flex; align-items: center; gap: 12px;">
+            <button class="btn-outline" onclick="toggleTheme()" style="padding: 8px 12px; font-size: 12px;">🌓</button>
             
             {% if session.get('user_id') %}
                 <div class="user-menu-container">
                     <button class="btn-outline" onclick="toggleUserMenu()" style="border-color: var(--accent); color: var(--accent);">👤  {{ session.get('user_name', 'Профиль') }} ▾</button>
                     <div class="user-dropdown" id="userDropdown">
-                        <a href="#schedule">📅  Мои тренировки</a>
                         {% if session.get('role') == 'manager' %}
                             <a href="/manager">🛠 Панель менеджера</a>
                         {% elif session.get('role') == 'admin' %}
                             <a href="/admin">🛡 Панель администратора</a>
+                        {% else %}
+                            <a href="#schedule">📅  Мои тренировки</a>
                         {% endif %}
                         <a href="/logout" class="logout">🚪  Выйти</a>
                     </div>
                 </div>
+
+                {% if session.get('role') not in ['admin', 'manager'] %}
+                    <a href="#schedule" class="btn-main" style="text-decoration: none;">Выбрать тренировку</a>
+                {% endif %}
             {% else %}
                 <button id="open-login-btn" class="btn-outline" style="padding: 8px 15px;">Войти</button>
+                <button class="btn-main open-modal-btn">Регистрация</button>
             {% endif %}
-            
-            <button class="btn-main open-modal-btn">Записаться</button>
+
         </div>
     </header>
 
@@ -150,6 +155,8 @@
             <button class="tab-btn" onclick="switchDay('Ср')">Среда</button>
             <button class="tab-btn" onclick="switchDay('Чт')">Четверг</button>
             <button class="tab-btn" onclick="switchDay('Пт')">Пятница</button>
+            <button class="tab-btn" onclick="switchDay('Сб')">Суббота</button>
+            <button class="tab-btn" onclick="switchDay('Вс')">Воскресенье</button>
         </div>
         <table class="schedule-table">
             <thead>
@@ -309,10 +316,10 @@
             const img = document.getElementById('qrImage');
             if(type === 'telegram') {
                 title.innerText = 'Telegram FITZONE';
-                img.src = "{{ url_for('static', filename='img/qr_tg.jpg') }}";
+                img.src = "{{ url_for('static', filename='qr_tg.jpg') }}";
             } else {
                 title.innerText = 'Max FITZONE';
-                img.src = "{{ url_for('static', filename='img/qr_max.jpg') }}";
+                img.src = "{{ url_for('static', filename='qr_max.jpg') }}";
             }
             modal.style.display = 'flex';
         }
@@ -349,31 +356,71 @@
         });
 
         // Загрузка расписания из БД и бронирование
+       let scheduleData = [];
+        let currentDayShort = 'Пн';
+
+        function getShortDayFromDate(dateStr) {
+            if (!dateStr) return '';
+            const onlyDate = dateStr.split(' ')[0];
+            const parts = onlyDate.split('.');
+            if (parts.length !== 3) return '';
+            const dateObj = new Date(parts[2], parts[1] - 1, parts[0]);
+            const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+            return days[dateObj.getDay()];
+        }
+
         async function loadSchedule() {
             try {
                 const res = await fetch('/api/schedule');
-                const data = await res.json();
-                const tbody = document.getElementById('schedule-body');
-                tbody.innerHTML = '';
-                if(data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Нет активных занятий в расписании</td></tr>';
-                    return;
-                }
-                data.forEach(item => {
-                    tbody.innerHTML += `<tr>
-                            <td>${item.date} ${item.event_time}</td>
-                            <td><b>${item.title}</b></td>
-                            <td>${item.trainer}</td>
-                            <td>${item.room}</td>
-                            <td><span style="color: var(--accent); font-weight: bold;">${item.free_slots} чел.</span></td>
-                            <td>
-                                ${item.free_slots > 0 ? `<button class="btn-main" style="padding: 6px 12px; font-size: 12px;" onclick="bookWorkout(${item.id})">Записаться</button>` : '<span style="color:#ff4444">Мест нет</span>'}
-                            </td>
-                        </tr>
-                    `;
-                });
+                scheduleData = await res.json();
+                renderScheduleTable(currentDayShort);
             } catch(e) { console.error(e); }
         }
+
+        const isLoggedIn = "{{ 'true' if session.get('user_id') else 'false' }}" === "true";
+        function renderScheduleTable(dayShort) {
+            currentDayShort = dayShort;
+            const tbody = document.getElementById('schedule-body');
+            tbody.innerHTML = '';
+
+            const filtered = scheduleData.filter(item => getShortDayFromDate(item.event_time) === dayShort);
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Нет активных занятий в этот день</td></tr>';
+                return;
+            }
+
+            filtered.forEach(item => {
+                let actionHtml = '';
+                if (item.free_seats <= 0) {
+                    actionHtml = '<span style="color:#ff4444">Мест нет</span>';
+                } else if (isLoggedIn) {
+                    actionHtml = `<button class="btn-main" style="padding: 6px 12px; font-size: 12px;" onclick="bookWorkout(${item.id})">Записаться</button>`;
+                } else {
+                    actionHtml = `<button class="btn-outline" style="padding: 6px 12px; font-size: 12px;" onclick="document.getElementById('login-modal').style.display='flex'">Войти для записи</button>`;
+                }
+
+                tbody.innerHTML += `<tr>
+                        <td>${item.event_time}</td>
+                        <td><b>${item.title}</b></td>
+                        <td>${item.trainer}</td>
+                        <td>${item.room}</td>
+                        <td><span style="color: var(--accent); font-weight: bold;">${item.free_seats} чел.</span></td>
+                        <td>${actionHtml}</td>
+                    </tr>
+                `;
+            });
+        }
+
+
+        function switchDay(dayShort) {
+            const map = { 'Понедельник': 'Пн', 'Вторник': 'Вт', 'Среда': 'Ср', 'Четверг': 'Чт', 'Пятница': 'Пт', 'Суббота': 'Сб', 'Воскресенье': 'Вс' };
+            document.querySelectorAll('#schedule .tab-btn').forEach(btn => {
+                btn.classList.toggle('active', map[btn.innerText.trim()] === dayShort);
+            });
+            renderScheduleTable(dayShort);
+        }
+
         loadSchedule();
 
         async function bookWorkout(workoutId) {
