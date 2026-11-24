@@ -36,6 +36,22 @@
             <tbody id="adminBookingsTable"></tbody>
         </table>
     </div>
+    <div class="panel-box">
+        <h2>Управление пользователями и ролями</h2>
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>ФИО</th>
+                    <th>Телефон</th>
+                    <th>Роль в системе</th>
+                </tr>
+            </thead>
+            <tbody id="users-table-body"></tbody>
+        </table>
+    </div>
+
+
 </div>
 
 <script>
@@ -108,6 +124,44 @@
 
     // Загружаем заявки при открытии страницы
     loadAdminBookings();
+            async function loadUsers() {
+            const res = await fetch('/api/admin/users');
+            if (!res.ok) return;
+            const users = await res.json();
+            const tbody = document.getElementById('users-table-body');
+                        tbody.innerHTML = users.map(u => `
+                <tr>
+                    <td>#${u.id}</td>
+                    <td><b>${u.fullname}</b></td>
+                    <td>${u.phone}</td>
+                    <td>
+                        <select class="role-select" onchange="changeUserRole(${u.id}, this.value)">
+                            <option value="user" ${u.role === 'user' ? 'selected' : ''}>Клиент (user)</option>
+                            <option value="manager" ${u.role === 'manager' ? 'selected' : ''}>Менеджер (manager)</option>
+                            <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Администратор (admin)</option>
+                        </select>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function changeUserRole(userId, newRole) {
+            const res = await fetch(`/api/admin/user/${userId}/role`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role: newRole })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert('Роль пользователя успешно обновлена!');
+            } else {
+                alert(data.message || 'Ошибка при смене роли');
+                loadUsers();
+            }
+        }
+
+        loadUsers();
+
 </script>
 
 </body>

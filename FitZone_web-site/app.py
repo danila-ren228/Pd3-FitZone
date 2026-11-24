@@ -371,6 +371,41 @@ def update_booking_status(booking_id):
     conn.close()
     return jsonify({'status': 'success'}), 200
 
+# --- API УПРАВЛЕНИЯ ПОЛЬЗОВАТЕЛЯМИ И РОЛЯМИ (ДЛЯ АДМИНИСТРАТОРА) ---
+@app.route('/api/admin/users')
+def api_admin_users():
+    if session.get('role') != 'admin':
+        return jsonify([]), 403
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, fullname, phone, role FROM clients ORDER BY id ASC")
+    users = [
+        {'id': u_id, 'fullname': name, 'phone': phone, 'role': role}
+        for u_id, name, phone, role in cursor.fetchall()
+    ]
+    cursor.close()
+    conn.close()
+    return jsonify(users)
+
+
+@app.route('/api/admin/user/<int:user_id>/role', methods=['POST'])
+def update_user_role(user_id):
+    if session.get('role') != 'admin':
+        return jsonify({'status': 'error', 'message': 'Доступ запрещен'}), 403
+    if user_id == session.get('user_id'):
+        return jsonify({'status': 'error', 'message': 'Нельзя изменить роль самому себе'}), 400
+
+    new_role = request.get_json().get('role')
+    if new_role not in ['user', 'manager', 'admin']:
+        return jsonify({'status': 'error', 'message': 'Некорректная роль'}), 400
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE clients SET role = %s WHERE id = %s", (new_role, user_id))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify({'status': 'success'}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

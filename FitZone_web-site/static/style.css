@@ -422,3 +422,42 @@ footer {
     margin-top: 4px;
     font-size: 11px;
 }
+/* Карточки и таблицы в панели администратора */
+.panel-box {
+    background: var(--bg-card);
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 30px;
+}
+
+.panel-box h2 {
+    margin-bottom: 20px;
+    font-size: 18px;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.admin-table thead tr {
+    background: var(--bg-card-hover);
+    color: var(--accent);
+}
+
+.role-select {
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: var(--bg-input);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+}
