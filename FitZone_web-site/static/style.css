@@ -383,3 +383,42 @@ footer {
 }
 .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
 #status-msg, #login-status-msg { margin-top: 15px; text-align: center; font-size: 13px; font-weight: bold; }
+/* Светящийся бейдж уведомлений */
+.notif-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #ff3b30;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 800;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    margin-left: 6px;
+    box-shadow: 0 0 10px rgba(255, 59, 48, 0.85);
+    animation: pulse-notif 1.8s infinite;
+}
+
+@keyframes pulse-notif {
+    0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.8); }
+    70% { box-shadow: 0 0 0 8px rgba(255, 59, 48, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
+}
+
+/* Список уведомлений внутри модального окна */
+.notif-item {
+    padding: 12px 15px;
+    border-radius: 8px;
+    background: var(--bg-input);
+    border-left: 3px solid var(--accent);
+    margin-bottom: 10px;
+    font-size: 13px;
+}
+.notif-item small {
+    display: block;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-size: 11px;
+}

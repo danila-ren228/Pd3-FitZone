@@ -26,18 +26,31 @@
             
             {% if session.get('user_id') %}
                 <div class="user-menu-container">
-                    <button class="btn-outline" onclick="toggleUserMenu()" style="border-color: var(--accent); color: var(--accent);">👤  {{ session.get('user_name', 'Профиль') }} ▾</button>
-                    <div class="user-dropdown" id="userDropdown">
-                        {% if session.get('role') == 'manager' %}
-                            <a href="/manager">🛠 Панель менеджера</a>
-                        {% elif session.get('role') == 'admin' %}
-                            <a href="/admin">🛡 Панель администратора</a>
-                        {% else %}
-                            <a href="#schedule">📅  Мои тренировки</a>
-                        {% endif %}
-                        <a href="/logout" class="logout">🚪  Выйти</a>
-                    </div>
-                </div>
+                    <button class="btn-outline" onclick="toggleUserMenu()" style="border-color: var(--accent); color: var(--accent);">
+                        👤 {{ session.get('user_name', 'Профиль') }}
+            {% if unread_count and unread_count > 0 %}
+                <span class="notif-badge" id="header-notif-badge">{{ unread_count }}</span>
+            {% endif %}
+
+        </button>
+        <div class="user-dropdown" id="userDropdown">
+            {% if session.get('role') == 'manager' %}
+                <a href="/manager">🛠 Панель менеджера</a>
+            {% elif session.get('role') == 'admin' %}
+                <a href="/admin">🛡 Панель администратора</a>
+            {% else %}
+                <a href="#" onclick="openMyTrainingsModal(); return false;">📅 Мои тренировки</a>
+                <a href="#" onclick="openPersonalModal(); return false;">🏋️ Персональный тренинг</a>
+                <a href="#" onclick="openNotificationsModal(); return false;">
+                    🔔 Уведомления
+                    {% if unread_count and unread_count > 0 %}
+                        <span class="notif-badge" id="menu-notif-badge">{{ unread_count }}</span>
+                    {% endif %}
+                </a>
+            {% endif %}
+            <a href="/logout" class="logout">🚪 Выйти</a>
+        </div>
+    </div>
 
                 {% if session.get('role') not in ['admin', 'manager'] %}
                     <a href="#schedule" class="btn-main" style="text-decoration: none;">Выбрать тренировку</a>
@@ -136,12 +149,57 @@
             </div>
             <div class="trainer-card">
                 <div>
-                    <div class="trainer-avatar">👨 </div>
-                    <h3>Максим Иванов</h3>
-                    <div class="spec">Функциональный тренинг</div>
-                    <div class="exp">⭐  Опыт: 7 лет</div>
+                    <div class="trainer-avatar">🏋️</div>
+                    <h3>Алексей Смирнов</h3>
+                    <div class="spec">Главный тренер, силовой тренинг</div>
+                    <div class="exp">⭐ Опыт: 10 лет</div>
                 </div>
-                <button class="btn-outline book-trainer-btn" data-trainer="Максим Иванов">Записаться</button>
+                <button class="btn-outline book-trainer-btn" data-trainer="Алексей Смирнов">Записаться</button>
+            </div>
+            <div class="trainer-card">
+                <div>
+                    <div class="trainer-avatar">🥊</div>
+                    <h3>Михаил Петров</h3>
+                    <div class="spec">Бокс, единоборства</div>
+                    <div class="exp">⭐ Опыт: 8 лет</div>
+                </div>
+                <button class="btn-outline book-trainer-btn" data-trainer="Михаил Петров">Записаться</button>
+            </div>
+            <div class="trainer-card">
+                <div>
+                    <div class="trainer-avatar">🏃‍♂️</div>
+                    <h3>Дмитрий Кузнецов</h3>
+                    <div class="spec">Кроссфит, Functional</div>
+                    <div class="exp">⭐ Опыт: 9 лет</div>
+                </div>
+                <button class="btn-outline book-trainer-btn" data-trainer="Дмитрий Кузнецов">Записаться</button>
+            </div>
+            <div class="trainer-card">
+                <div>
+                    <div class="trainer-avatar">🤸‍♀️</div>
+                    <h3>Елизавета Иванова</h3>
+                    <div class="spec">Пилатес, здоровая спина</div>
+                    <div class="exp">⭐ Опыт: 6 лет</div>
+                </div>
+                <button class="btn-outline book-trainer-btn" data-trainer="Елизавета Иванова">Записаться</button>
+            </div>
+            <div class="trainer-card">
+                <div>
+                    <div class="trainer-avatar">🏋️‍♂️</div>
+                    <h3>Сергей Попов</h3>
+                    <div class="spec">Пауэрлифтинг, набор массы</div>
+                    <div class="exp">⭐ Опыт: 11 лет</div>
+                </div>
+                <button class="btn-outline book-trainer-btn" data-trainer="Сергей Попов">Записаться</button>
+            </div>
+            <div class="trainer-card">
+                <div>
+                    <div class="trainer-avatar">🩺</div>
+                    <h3>Артём Лебедев</h3>
+                    <div class="spec">Реабилитация, ЛФК</div>
+                    <div class="exp">⭐ Опыт: 12 лет</div>
+                </div>
+                <button class="btn-outline book-trainer-btn" data-trainer="Артём Лебедев">Записаться</button>
             </div>
         </div>
     </section>
@@ -240,18 +298,6 @@
                     <label>Пароль для входа:</label>
                     <input type="password" id="reg-password" placeholder="Пароль" required>
                 </div>
-                <div class="form-group">
-                    <label>Тариф:</label>
-                    <select id="tariff">
-                        <option value="Старт">Старт (1 990 ₽)</option>
-                        <option value="Оптимальный">Оптимальный (2 990 ₽)</option>
-                        <option value="Премиум">Премиум (4 990 ₽)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Тренер / Пожелания:</label>
-                    <input type="text" id="trainer_note" placeholder="Имя тренера или направление">
-                </div>
                 <button type="submit" class="btn-main" style="width: 100%; margin-top: 10px;">Зарегистрироваться</button>
             </form>
             <div id="status-msg"></div>
@@ -286,6 +332,72 @@
             <img id="qrImage" src="" alt="QR Code" style="width: 180px; height: 180px; border-radius: 8px; background: #fff; padding: 10px; margin: 0 auto;">
         </div>
     </div>
+
+<!-- Модальное окно: Персональный тренинг -->
+<div class="modal-overlay" id="personalModal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="document.getElementById('personalModal').style.display='none'">&times;</span>
+        <h3 style="color: var(--accent); margin-bottom: 20px;">Запись на персональный тренинг</h3>
+        <form id="personalForm">
+            <div class="form-group">
+                <label>Выберите тренера:</label>
+                <select name="trainer" required>
+                    <option value="Анна Кузнецова">Анна Кузнецова (Силовые / Фитнес)</option>
+                    <option value="Екатерина Морозова">Екатерина Морозова (Йога / Растяжка)</option>
+                    <option value="Мария Соколова">Мария Соколова (Функциональный тренинг)</option>
+                    <option value="Александр Петров">Александр Петров (Бодибилдинг)</option>
+                    <option value="Алексей Смирнов">Алексей Смирнов (Силовой тренинг)</option>
+                    <option value="Михаил Петров">Михаил Петров (Бокс / Единоборства)</option>
+                    <option value="Дмитрий Кузнецов">Дмитрий Кузнецов (Кроссфит / Functional)</option>
+                    <option value="Елизавета Иванова">Елизавета Иванова (Пилатес / Здоровая спина)</option>
+                    <option value="Сергей Попов">Сергей Попов (Пауэрлифтинг / Набор массы)</option>
+                    <option value="Артём Лебедев">Артём Лебедев (Реабилитация / ЛФК)</option>
+
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Желаемые дата и время:</label>
+                <input type="datetime-local" name="datetime" required>
+            </div>
+            <div class="form-group">
+                <label>Цель тренировок / Пожелания:</label>
+                <input type="text" name="goal" placeholder="Например: набор массы, постановка техники">
+            </div>
+            <button type="submit" class="btn-main" style="width: 100%;">Отправить заявку</button>
+        </form>
+        <div id="personal-status-msg" style="margin-top: 12px; text-align: center; font-size: 13px; font-weight: bold;"></div>
+    </div>
+</div>
+
+<!-- Модальное окно: Уведомления -->
+<div class="modal-overlay" id="notificationsModal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="document.getElementById('notificationsModal').style.display='none'">&times;</span>
+        <h3 style="color: var(--accent); margin-bottom: 20px;">Уведомления</h3>
+        <div id="notifications-list">
+            {% if notifications %}
+                {% for n in notifications %}
+                    <div class="notif-item">
+                        {{ n.message }}
+                        <small>{{ n.created_at }}</small>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: var(--text-muted); text-align: center;">Новых уведомлений пока нет</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<!-- Модальное окно: Тренировки -->
+<div class="modal-overlay" id="myTrainingsModal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="document.getElementById('myTrainingsModal').style.display='none'">&times;</span>
+        <h3 style="color: var(--accent); margin-bottom: 20px; text-align: center;">Мои тренировки</h3>
+        <div id="my-trainings-list">
+            <p style="color: var(--text-muted); text-align: center;">Загрузка...</p>
+        </div>
+    </div>
+</div>
 
     <!-- JavaScript логика -->
     <script>
@@ -330,7 +442,6 @@
         const closeModalBtn = document.getElementById('close-modal');
         const openModalBtns = document.querySelectorAll('.open-modal-btn');
         const bookTrainerBtns = document.querySelectorAll('.book-trainer-btn');
-        const trainerNote = document.getElementById('trainer_note');
         const form = document.getElementById('booking-form');
         const statusMsg = document.getElementById('status-msg');
 
@@ -343,10 +454,15 @@
         
         bookTrainerBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                trainerNote.value = `Тренер: ${btn.getAttribute('data-trainer')}`;
-                modal.style.display = 'flex';
-            });
+                if (isLoggedIn) {
+                    document.querySelector('#personalForm select[name="trainer"]').value = btn.getAttribute('data-trainer');
+                    openPersonalModal();
+            } else {
+                document.getElementById('login-modal').style.display = 'flex';
+            }
         });
+    });
+
 
         closeModalBtn.addEventListener('click', closeModal);
         window.addEventListener('click', (e) => { 
@@ -447,8 +563,6 @@
                 fullname: document.getElementById('fullname').value,
                 phone: document.getElementById('phone').value,
                 password: document.getElementById('reg-password').value,
-                tariff: document.getElementById('tariff').value,
-                trainer_note: document.getElementById('trainer_note').value
             };
             try {
                 const res = await fetch('/api/register', {
@@ -457,12 +571,8 @@
                     body: JSON.stringify(payload)
                 });
                 if (res.ok) {
-                    statusMsg.textContent = 'Успешно! Теперь войдите в систему.';
-                    form.reset();
-                    setTimeout(() => { 
-                        closeModal(); 
-                        document.getElementById('login-modal').style.display = 'flex';
-                    }, 1200);
+                    statusMsg.textContent = 'Успешно! Входим в систему...';
+                    setTimeout(() => window.location.reload(), 800);
                 } else {
                     statusMsg.style.color = '#ff4444';
                     statusMsg.textContent = 'Ошибка регистрации (возможно, телефон уже занят)';
@@ -472,6 +582,37 @@
                 statusMsg.textContent = 'Ошибка сети';
             }
         });
+
+         // Отправка заявки на персональный тренинг
+        const personalForm = document.getElementById('personalForm');
+        if (personalForm) {
+            personalForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const msg = document.getElementById('personal-status-msg');
+                const formData = new FormData(personalForm);
+                const res = await fetch('/api/book-personal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        trainer: formData.get('trainer'),
+                        datetime: formData.get('datetime'),
+                        goal: formData.get('goal')
+                    })
+                });
+                if (res.ok) {
+                    msg.style.color = 'var(--accent)';
+                    msg.textContent = 'Заявка отправлена! Ожидайте уведомление.';
+                    personalForm.reset();
+                    setTimeout(() => {
+                        document.getElementById('personalModal').style.display = 'none';
+                        msg.textContent = '';
+                    }, 1200);
+                } else {
+                    msg.style.color = '#ff4444';
+                    msg.textContent = 'Ошибка отправки';
+                }
+            });
+        }
 
         // Авторизация
         const loginModal = document.getElementById('login-modal');
@@ -514,6 +655,51 @@
                 }
             });
         }
+    function openPersonalModal() {
+        document.getElementById('userDropdown').classList.remove('active');
+        document.getElementById('personalModal').style.display = 'flex';
+}
+
+    function openNotificationsModal() {
+        document.getElementById('userDropdown').classList.remove('active');
+        document.getElementById('notificationsModal').style.display = 'flex';
+        fetch('/api/notifications/read', { method: 'POST' }).then(() => {
+            const b1 = document.getElementById('header-notif-badge');
+            const b2 = document.getElementById('menu-notif-badge');
+            if (b1) b1.remove();
+            if (b2) b2.remove();
+        });
+}
+async function openMyTrainingsModal() {
+    const dropdown = document.getElementById('userDropdown');
+    if (dropdown) dropdown.classList.remove('active');
+    const modal = document.getElementById('myTrainingsModal');
+    const list = document.getElementById('my-trainings-list');
+    modal.style.display = 'flex';
+    list.innerHTML = '<p style="color: var(--text-muted); text-align: center;">Загрузка...</p>';
+
+    const res = await fetch('/api/my-bookings');
+    const bookings = await res.json();
+    if (!bookings.length) {
+        list.innerHTML = '<p style="color: var(--text-muted); text-align: center;">У вас пока нет активных записей</p>';
+        return;
+    }
+
+    list.innerHTML = bookings.map(b => {
+        const statusColor = b.status === 'Подтверждено' ? 'var(--accent)' : (b.status === 'Отклонено' ? '#ff4444' : 'var(--text-muted)');
+        return `
+            <div class="notif-item" style="border-left-color: ${statusColor};">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                    <b>${b.title}</b>
+                    <span style="color: ${statusColor}; font-weight: 700; font-size: 12px;">${b.status}</span>
+                </div>
+                <small>Тренер: ${b.trainer} &nbsp;|&nbsp; Время: ${b.time}</small>
+            </div>
+        `;
+    }).join('');
+}
+
     </script>
+    
 </body>
 </html>
